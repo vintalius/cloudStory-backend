@@ -39,8 +39,16 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            echo "🚀 Preparing backend directory..."
+            if [ ! -d /root/backend ]; then
+              echo "📦 Cloning repository..."
+              cd /root && git clone https://github.com/vintalius/cloudStory-backend.git backend
+            fi
+            
             echo "🚀 Pulling latest code from GitHub..."
             cd /root/backend
+            git fetch origin
+            git checkout PROD
             git pull origin PROD
             
             echo "🔨 Building Docker image..."
