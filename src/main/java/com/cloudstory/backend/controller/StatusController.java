@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/status.server")
+@RequestMapping("/api/status")
 public class StatusController {
 
     @Autowired
