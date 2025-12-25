@@ -21,13 +21,13 @@ public class StatusController {
     @Autowired
     private OnlineUsersSimulation onlineUsersSimulation;
     
-    @Value("${game.expRate:5x}")
+    @Value("${game.expRate:50x}")
     private String expRate;
     
-    @Value("${game.dropRate:2x}")
+    @Value("${game.dropRate:20x}")
     private String dropRate;
     
-    @Value("${game.mesoRate:1x}")
+    @Value("${game.mesoRate:10x}")
     private String mesoRate;
 
     @GetMapping
