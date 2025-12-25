@@ -44,6 +44,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT Filter
             .authorizeHttpRequests(auth -> auth
                 // 1. Public endpoints - accessible to everyone
+                .requestMatchers("/", "/index.html").permitAll() // Root and index
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/login").permitAll()
                 .requestMatchers("/api/rankings/**").permitAll()
