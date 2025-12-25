@@ -1,0 +1,67 @@
+package com.cloudstory.backend.controller;
+
+import com.cloudstory.backend.repository.AccountRepository;
+import com.cloudstory.backend.service.OnlineUsersSimulation;
+import com.cloudstory.backend.dto.OnlineCountResponse;
+import com.cloudstory.backend.dto.ServerStatusResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/status")
+public class StatusController {
+
+    @Autowired
+    private AccountRepository accountRepository;
+    
+    @Autowired
+    private OnlineUsersSimulation onlineUsersSimulation;
+    
+    @Value("${game.expRate:5x}")
+    private String expRate;
+    
+    @Value("${game.dropRate:2x}")
+    private String dropRate;
+    
+    @Value("${game.mesoRate:1x}")
+    private String mesoRate;
+
+    @GetMapping
+    public ResponseEntity<ServerStatusResponse> getStatus() {
+        int displayCount = onlineUsersSimulation.getOnlineCount();
+        int realCount = onlineUsersSimulation.getRealOnlineCount();
+        boolean isSimulated = realCount < 10;
+        
+        return ResponseEntity.ok(new ServerStatusResponse(
+            "Online",
+            displayCount,
+            realCount,
+            isSimulated,
+            expRate,
+            dropRate,
+            mesoRate
+        ));
+    }
+    
+    /**
+     * Get online user count (shows simulated count if < 10 real users)
+     */
+    @GetMapping("/online-count")
+    public ResponseEntity<OnlineCountResponse> getOnlineCount() {
+        int displayCount = onlineUsersSimulation.getOnlineCount();
+        int realCount = onlineUsersSimulation.getRealOnlineCount();
+        boolean isSimulated = realCount < 10;
+        
+        return ResponseEntity.ok(new OnlineCountResponse(
+            displayCount,
+            realCount,
+            isSimulated
+        ));
+    }
+}
+
+
