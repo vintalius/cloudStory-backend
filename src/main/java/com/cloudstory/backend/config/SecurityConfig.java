@@ -74,7 +74,7 @@ public class SecurityConfig {
             "http://72.60.127.22:8080",     // VPS with port
             "http://cloudstory.online",     // Your domain
             "https://cloudstory.online",    // HTTPS version
-            "https://www.cloudstory.online" // HTTPS with www
+            "https://www.cl     oudstory.online" // HTTPS with www
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
