@@ -3,8 +3,11 @@ name: Deploy Backend to Production
 on:
   push:
     branches:
-      - main
-      - production
+      - PROD
+  pull_request:
+    types: [closed]
+    branches:
+      - PROD
 
 jobs:
   build-and-deploy:
@@ -38,7 +41,7 @@ jobs:
           script: |
             echo "🚀 Pulling latest code from GitHub..."
             cd /root/backend
-            git pull origin main
+            git pull origin PROD
             
             echo "🔨 Building Docker image..."
             docker build -t cloudstory-backend:latest .
