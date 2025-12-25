@@ -69,9 +69,12 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",        // Local React development
             "http://localhost",             // Local without port
+            "http://localhost:3000",        // Local production build
             "http://72.60.127.22",          // VPS IP
+            "http://72.60.127.22:8080",     // VPS with port
             "http://cloudstory.online",     // Your domain
-            "https://cloudstory.online"     // HTTPS version
+            "https://cloudstory.online",    // HTTPS version
+            "https://www.cloudstory.online" // HTTPS with www
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
