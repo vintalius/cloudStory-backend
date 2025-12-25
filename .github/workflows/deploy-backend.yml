@@ -1,0 +1,75 @@
+name: Deploy Backend to Production
+
+on:
+  push:
+    branches:
+      - main
+      - production
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Build with Maven
+        run: mvn clean package -DskipTests -q
+      
+      - name: Build Docker Image
+        run: |
+          cd ${{ github.workspace }}
+          docker build -t cloudstory-backend:${{ github.sha }} .
+          docker tag cloudstory-backend:${{ github.sha }} cloudstory-backend:latest
+      
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "🚀 Pulling latest code from GitHub..."
+            cd /root/backend
+            git pull origin main
+            
+            echo "🔨 Building Docker image..."
+            docker build -t cloudstory-backend:latest .
+            
+            echo "🛑 Stopping old container..."
+            docker stop cloudstory-site-server || true
+            docker rm cloudstory-site-server || true
+            
+            echo "🚀 Starting new container..."
+            docker run -d \
+              --network host \
+              --name cloudstory-site-server \
+              -e MYSQL_HOST=127.0.0.1 \
+              -e MYSQL_PORT=3306 \
+              -e MYSQL_DB=cosmic \
+              -e MYSQL_USER=root \
+              -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+              cloudstory-backend:latest
+            
+            echo "✅ Waiting for service to start..."
+            sleep 5
+            
+            echo "📋 Checking logs..."
+            docker logs cloudstory-site-server | tail -20
+            
+            echo "✅ Backend deployed successfully!"
+      
+      - name: Notify Deployment Success
+        if: success()
+        run: echo "✅ Backend deployment completed successfully!"
+      
+      - name: Notify Deployment Failure
+        if: failure()
+        run: echo "❌ Backend deployment failed!"
