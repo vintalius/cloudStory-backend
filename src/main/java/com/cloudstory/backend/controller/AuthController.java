@@ -196,32 +196,6 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of("error", "Error resetting password: " + e.getMessage()));
         }
     }
-
-    @PostMapping("/user/change-password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            Account account = accountRepository.findByName(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            // Validate current password
-            if (!passwordEncoder.matches(request.getCurrentPassword(), account.getPassword())) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Current password is incorrect"));
-            }
-
-            // Hash and save new password
-            String newHashedPassword = passwordEncoder.encode(request.getNewPassword());
-            account.setPassword(newHashedPassword);
-            accountRepository.save(account);
-
-            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
-
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Error changing password: " + e.getMessage()));
-        }
-    }
 }
 
 
