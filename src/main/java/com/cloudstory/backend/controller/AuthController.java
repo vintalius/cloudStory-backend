@@ -129,6 +129,37 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/validate-reset-token")
+    public ResponseEntity<?> validateResetToken(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Token is required"));
+            }
+
+            // Find the reset token
+            Optional<PasswordResetToken> tokenOptional = passwordResetTokenRepository.findByToken(token);
+
+            if (tokenOptional.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired password reset token"));
+            }
+
+            PasswordResetToken resetToken = tokenOptional.get();
+
+            // Check if token is expired
+            if (resetToken.isExpired()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Password reset token has expired"));
+            }
+
+            // Token is valid
+            return ResponseEntity.ok(Map.of("message", "Token is valid"));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Error validating token: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         try {
