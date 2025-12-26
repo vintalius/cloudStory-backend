@@ -67,6 +67,11 @@ public class UserController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Current password is incorrect"));
             }
 
+            // Check if new password is same as current password
+            if (passwordEncoder.matches(request.getNewPassword(), account.getPassword())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "New password must be different from current password"));
+            }
+
             // Hash and save new password
             String newHashedPassword = passwordEncoder.encode(request.getNewPassword());
             account.setPassword(newHashedPassword);
