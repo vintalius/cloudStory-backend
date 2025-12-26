@@ -56,6 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // Extract username from token
                 String username = jwtUtil.extractUsername(token);
+                System.out.println("DEBUG: Username extracted from token: " + username);
 
                 // If username exists and no authentication is set yet
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -63,7 +64,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
                     // Validate token
-                    if (jwtUtil.validateToken(token, userDetails)) {
+                    boolean tokenValid = jwtUtil.validateToken(token, userDetails);
+                    System.out.println("DEBUG: Token valid: " + tokenValid);
+                    
+                    if (tokenValid) {
                         // Create authentication token
                         UsernamePasswordAuthenticationToken authenticationToken =
                                 new UsernamePasswordAuthenticationToken(
@@ -77,6 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         // Set authentication in context
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                        System.out.println("DEBUG: Authentication set for user: " + username);
                     }
                 }
             }
