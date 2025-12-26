@@ -62,9 +62,9 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
             String message = authService.register(request);
-            return ResponseEntity.ok(message);
+            return ResponseEntity.ok(Map.of("message", message));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -84,9 +84,9 @@ public class AuthController {
             return ResponseEntity.ok(response);
 
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body("Invalid username or password");
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid username or password"));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Login failed: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Login failed: " + e.getMessage()));
         }
     }
 
@@ -96,7 +96,7 @@ public class AuthController {
             String email = request.get("email");
 
             if (email == null || email.isEmpty()) {
-                return ResponseEntity.badRequest().body("Email is required");
+                return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
             }
 
             // Find account by email
@@ -126,7 +126,7 @@ public class AuthController {
             return ResponseEntity.ok("If an account with that email exists, a password reset link will be sent");
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error processing password reset request: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Error processing password reset request: " + e.getMessage()));
         }
     }
 
