@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html").permitAll() // Root and index
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/forgot-password").permitAll()
+                .requestMatchers("/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/rankings/**").permitAll()
                 .requestMatchers("/api/status/**").permitAll()
                 .requestMatchers("/api/debug/**").permitAll() // Debug endpoints
