@@ -138,7 +138,7 @@ public class AuthController {
             Optional<PasswordResetToken> tokenOptional = passwordResetTokenRepository.findByToken(token);
 
             if (tokenOptional.isEmpty()) {
-                return ResponseEntity.badRequest().body("Invalid or expired password reset token");
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired password reset token"));
             }
 
             PasswordResetToken resetToken = tokenOptional.get();
@@ -146,7 +146,7 @@ public class AuthController {
             // Check if token is expired
             if (resetToken.isExpired()) {
                 passwordResetTokenRepository.delete(resetToken);
-                return ResponseEntity.badRequest().body("Password reset token has expired");
+                return ResponseEntity.badRequest().body(Map.of("error", "Password reset token has expired"));
             }
 
             // Get the account and update password
@@ -158,10 +158,10 @@ public class AuthController {
             // Delete the used token
             passwordResetTokenRepository.delete(resetToken);
 
-            return ResponseEntity.ok("Password reset successfully. You can now login with your new password.");
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully. You can now login with your new password."));
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error resetting password: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Error resetting password: " + e.getMessage()));
         }
     }
 }
