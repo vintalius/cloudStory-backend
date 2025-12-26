@@ -69,6 +69,7 @@ jobs:
               -e MYSQL_DB=cosmic \
               -e MYSQL_USER=root \
               -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+              -e APP_FRONTEND_URL=https://cloudstory.online \
               cloudstory-backend:latest
             
             echo "✅ Waiting for service to start..."
