@@ -1,6 +1,7 @@
 package com.cloudstory.backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -52,6 +53,9 @@ public class AuthController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -108,8 +112,8 @@ public class AuthController {
             PasswordResetToken resetToken = new PasswordResetToken(account);
             passwordResetTokenRepository.save(resetToken);
 
-            // Generate reset link
-            String resetLink = "http://localhost:5173/reset-password?token=" + resetToken.getToken();
+            // Generate reset link using configured frontend URL (supports dev and production)
+            String resetLink = frontendUrl + "/reset-password?token=" + resetToken.getToken();
 
             // Send email
             String subject = "Password Reset Request";
