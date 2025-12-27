@@ -32,6 +32,10 @@ public class StatusController {
 
     @GetMapping
     public ResponseEntity<ServerStatusResponse> getStatus() {
+        // Update real online count from database (users with loggedin > 0)
+        long realOnlineCount = accountRepository.countByLoggedinGreaterThan(0);
+        onlineUsersSimulation.updateRealOnlineCount((int) realOnlineCount);
+        
         int displayCount = onlineUsersSimulation.getOnlineCount();
         int realCount = onlineUsersSimulation.getRealOnlineCount();
         boolean isSimulated = realCount < 10;
@@ -48,10 +52,14 @@ public class StatusController {
     }
     
     /**
-     * Get online user count (shows simulated count if < 10 real users)
+     * Get online user count (shows real count from database)
      */
     @GetMapping("/online-count")
     public ResponseEntity<OnlineCountResponse> getOnlineCount() {
+        // Update real online count from database (users with loggedin > 0)
+        long realOnlineCount = accountRepository.countByLoggedinGreaterThan(0);
+        onlineUsersSimulation.updateRealOnlineCount((int) realOnlineCount);
+        
         int displayCount = onlineUsersSimulation.getOnlineCount();
         int realCount = onlineUsersSimulation.getRealOnlineCount();
         boolean isSimulated = realCount < 10;
