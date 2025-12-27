@@ -50,4 +50,5 @@ public class OnlineUsersSimulation {
     public int getRealOnlineCount() {
         return realOnlineCount;
     }
+}
 
