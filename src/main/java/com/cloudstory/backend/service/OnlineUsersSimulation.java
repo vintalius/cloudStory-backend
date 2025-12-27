@@ -2,29 +2,23 @@ package com.cloudstory.backend.service;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import java.util.Random;
 
 @Service
 public class OnlineUsersSimulation {
     
-    private int simulatedOnlineCount = 15; // Start with random 10-30
-    private final Random random = new Random();
     private int realOnlineCount = 0; // Track actual logins
     
     public OnlineUsersSimulation() {
-        // Initialize with random between 10-30
-        this.simulatedOnlineCount = 10 + new Random().nextInt(21);
+        // Initialize with 0 real online count
+        this.realOnlineCount = 0;
     }
     
     /**
      * Get the online count to display.
-     * If real users >= 10, show real count. Otherwise show simulated.
+     * Show real online count (no simulation/fake data)
      */
     public int getOnlineCount() {
-        if (realOnlineCount >= 10) {
-            return realOnlineCount;
-        }
-        return simulatedOnlineCount;
+        return realOnlineCount;
     }
     
     /**
