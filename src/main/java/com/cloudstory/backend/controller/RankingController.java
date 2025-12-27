@@ -18,6 +18,6 @@ public class RankingController {
 
     @GetMapping
     public List<MapleCharacter> getTop5Characters() {
-        return characterRepository.findTop5ByOrderByLevelDescExpDesc();
+        return characterRepository.findTop5ExcludingAdmins();
     }
 }
