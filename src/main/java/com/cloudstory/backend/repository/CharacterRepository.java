@@ -14,6 +14,6 @@ public interface CharacterRepository extends JpaRepository<MapleCharacter, Integ
     List<MapleCharacter> findTop5ByOrderByLevelDescExpDesc();
     
     // Ranking query excluding admins (level 200 and specific names)
-    @Query("SELECT c FROM MapleCharacter c WHERE c.level < 200 AND c.name NOT IN ('TalX') ORDER BY c.level DESC, c.exp DESC")
+    @Query("SELECT c FROM MapleCharacter c WHERE c.level < 200 AND c.name NOT IN ('TalX') ORDER BY c.level DESC")
     List<MapleCharacter> findTop5ExcludingAdmins();
 }
