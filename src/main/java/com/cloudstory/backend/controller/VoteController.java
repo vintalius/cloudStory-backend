@@ -15,7 +15,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/vote")
-@CrossOrigin(origins = "*")
 public class VoteController {
 
     @Autowired
