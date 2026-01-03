@@ -1,6 +1,7 @@
 package com.cloudstory.backend.controller;
 
 import com.cloudstory.backend.dto.VoteStatusDTO;
+import com.cloudstory.backend.dto.VoteTierDTO;
 import com.cloudstory.backend.entity.Vote;
 import com.cloudstory.backend.service.VoteService;
 import com.cloudstory.backend.util.JwtUtil;
@@ -50,31 +51,111 @@ public class VoteController {
 
     /**
      * Callback endpoint for voting sites
-     * Voting sites call this URL after a user votes
+     * Supports multiple formats:
      * 
-     * Example URL: POST /api/vote/callback/gtop100?username=PlayerName&key=secret123
+     * GTOP100 (POST/JSON):
+     *   - pb_name: Username from pingback
+     *   - pingbackkey: Secret key
+     *   - ip: Voter IP address
      * 
-     * @param site The voting site name (gtop100, topg, etc.)
-     * @param username The username who voted
-     * @param key The secret key from voting site
-     * @param request HTTP request to get IP address
+     * TopG (Query Parameters):
+     *   - p_resp: Username (from URL parameter in vote link)
+     *   - ip: Voter IP
+     *   - key: Secret key
+     * 
+     * XtremeTop100 (Query Parameters):
+     *   - custom: Username (from postback parameter in vote link)
+     *   - votingip: Voter IP
+     *   - key: Secret key (in Authorization header or from config)
+     * 
+     * Arena-Top100 (Query Parameters):
+     *   - username: Player username
+     *   - key: Secret key
+     * 
+     * @param site The voting site name (gtop100, topg, xtremetop100, arena-top100)
+     * @param username Optional: username from query parameters
+     * @param key Optional: secret key from query parameters
+     * @param pb_name Optional: GTOP100 username
+     * @param pingbackkey Optional: GTOP100 secret key
+     * @param p_resp Optional: TopG username
+     * @param custom Optional: XtremeTop100 username
+     * @param votingip Optional: XtremeTop100 voter IP
+     * @param request HTTP request to get IP address and/or POST body
      * @return Success or error message
      */
     @PostMapping("/callback/{site}")
     public ResponseEntity<?> voteCallback(
             @PathVariable String site,
-            @RequestParam String username,
-            @RequestParam String key,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String key,
+            @RequestParam(required = false) String pb_name,
+            @RequestParam(required = false) String pingbackkey,
+            @RequestParam(required = false) String p_resp,
+            @RequestParam(required = false) String ip,
+            @RequestParam(required = false) String custom,
+            @RequestParam(required = false) String votingip,
+            @RequestParam(required = false) String secret,
+            @RequestParam(required = false) String voted,
             HttpServletRequest request) {
         
         try {
-            String ipAddress = getClientIpAddress(request);
-            voteService.processVote(username, site, key, ipAddress);
+            // Determine username and secret based on voting site
+            String finalUsername = username;
+            String finalKey = key;
+            String finalIp = ip;
+            boolean voteSuccess = true;
+            
+            // Handle GTOP100 (uses pb_name and pingbackkey)
+            if ("gtop100".equals(site)) {
+                finalUsername = pb_name;
+                finalKey = pingbackkey;
+            }
+            // Handle TopG (uses p_resp and ip)
+            else if ("topg".equals(site)) {
+                finalUsername = p_resp;
+                // TopG doesn't send key in callback
+            }
+            // Handle XtremeTop100 (uses custom and votingip)
+            else if ("xtremetop100".equals(site)) {
+                finalUsername = custom;
+                finalIp = votingip;
+            }
+            // Handle Arena-Top100 (uses username, secret, and voted flag)
+            else if ("arena-top100".equals(site)) {
+                finalKey = secret;
+                // Check if vote was successful (1=success, 0=failed)
+                voteSuccess = "1".equals(voted);
+            }
+            
+            // Validate required parameters
+            if (finalUsername == null || finalUsername.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Username not provided"
+                ));
+            }
+            
+            // For sites that require key validation
+            if (("gtop100".equals(site) || "arena-top100".equals(site))) {
+                if (finalKey == null || finalKey.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "error", "Secret key not provided"
+                    ));
+                }
+            }
+            
+            // Use provided IP or get from request
+            if (finalIp == null || finalIp.isEmpty()) {
+                finalIp = getClientIpAddress(request);
+            }
+            
+            voteService.processVote(finalUsername, site, finalKey, finalIp, voteSuccess);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Vote recorded successfully",
-                "username", username,
+                "username", finalUsername,
                 "site", site
             ));
         } catch (Exception e) {
@@ -119,6 +200,24 @@ public class VoteController {
             long count = voteService.getUserVoteCount(username);
             
             return ResponseEntity.ok(Map.of("totalVotes", count));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get user's voting tier information
+     *
+     * @param authHeader Authorization header with JWT token
+     * @return User's tier information including progress to next tier
+     */
+    @GetMapping("/tier")
+    public ResponseEntity<?> getUserTier(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String username = getUsernameFromToken(authHeader);
+            VoteTierDTO tierInfo = voteService.getUserTierInfo(username);
+
+            return ResponseEntity.ok(tierInfo);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

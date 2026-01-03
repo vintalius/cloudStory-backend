@@ -46,6 +46,9 @@ public class Account {
     @Column(name = "vPoints")
     private Integer vPoints;
 
+    @Column(length = 20)
+    private String voteTier = "NONE";
+
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
@@ -86,6 +89,9 @@ public class Account {
 
     public Integer getVPoints() { return vPoints; }
     public void setVPoints(Integer vPoints) { this.vPoints = vPoints; }
+
+    public String getVoteTier() { return voteTier; }
+    public void setVoteTier(String voteTier) { this.voteTier = voteTier; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

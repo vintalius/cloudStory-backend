@@ -26,19 +26,21 @@ CREATE TABLE IF NOT EXISTS votes (
 -- 2. Update accounts table (if columns don't exist)
 -- ========================================
 -- Note: These columns may already exist in your MapleStory database
--- The IF NOT EXISTS syntax will prevent errors if they already exist
 
 -- Add paypalNX column (donated NX / voting NX)
-ALTER TABLE accounts 
-ADD COLUMN IF NOT EXISTS paypalNX INT DEFAULT 0 COMMENT 'Donated or Vote NX';
+ALTER TABLE accounts ADD COLUMN paypalNX INT DEFAULT 0 COMMENT 'Donated or Vote NX';
 
 -- Add mPoints column (Maple Points)
-ALTER TABLE accounts 
-ADD COLUMN IF NOT EXISTS mPoints INT DEFAULT 0 COMMENT 'Maple Points';
+ALTER TABLE accounts ADD COLUMN mPoints INT DEFAULT 0 COMMENT 'Maple Points';
 
 -- Add vPoints column (Vote Points)
-ALTER TABLE accounts 
-ADD COLUMN IF NOT EXISTS vPoints INT DEFAULT 0 COMMENT 'Vote Points';
+ALTER TABLE accounts ADD COLUMN vPoints INT DEFAULT 0 COMMENT 'Vote Points';
+
+-- Add voteTier column (Voting Tier for reward multipliers)
+ALTER TABLE accounts ADD COLUMN voteTier VARCHAR(20) DEFAULT 'NONE' COMMENT 'Current voting tier: NONE, BRONZE, SILVER, GOLD';
+
+-- Create index for voteTier for faster queries
+CREATE INDEX idx_vote_tier ON accounts(voteTier);
 
 -- ========================================
 -- 3. Verify the changes
