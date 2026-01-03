@@ -1,8 +1,10 @@
 package com.cloudstory.backend.service;
 
 import com.cloudstory.backend.dto.VoteStatusDTO;
+import com.cloudstory.backend.dto.VoteTierDTO;
 import com.cloudstory.backend.entity.Account;
 import com.cloudstory.backend.entity.Vote;
+import com.cloudstory.backend.enums.VoteTier;
 import com.cloudstory.backend.repository.AccountRepository;
 import com.cloudstory.backend.repository.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,50 +94,70 @@ public class VoteService {
      * Process vote callback from voting site
      * @param username The username who voted
      * @param voteSite The voting site name
-     * @param secretKey The secret key from the voting site
+     * @param secretKey The secret key from the voting site (can be null for sites that don't require it)
      * @param ipAddress The IP address of the voter
+     * @param voteSuccess Optional: whether vote was successful (for sites like Arena-Top100)
      * @throws RuntimeException if validation fails
      */
     @Transactional
     public void processVote(String username, String voteSite, String secretKey, String ipAddress) {
+        processVote(username, voteSite, secretKey, ipAddress, true);
+    }
+
+    @Transactional
+    public void processVote(String username, String voteSite, String secretKey, String ipAddress, boolean voteSuccess) {
         
-        // 1. Verify secret key
-        if (!isValidSecretKey(voteSite, secretKey)) {
-            throw new RuntimeException("Invalid secret key for site: " + voteSite);
+        // 1. Verify secret key only for sites that require it
+        if ("gtop100".equals(voteSite) || "arena-top100".equals(voteSite)) {
+            if (!isValidSecretKey(voteSite, secretKey)) {
+                throw new RuntimeException("Invalid secret key for site: " + voteSite);
+            }
         }
 
-        // 2. Check cooldown
+        // 2. Check if vote was successful (for Arena-Top100, 1=success, 0=failed)
+        if (!voteSuccess) {
+            throw new RuntimeException("Vote was not successful on " + voteSite);
+        }
+
+        // 3. Check cooldown
         VoteStatusDTO status = getVoteStatus(username, voteSite);
         if (!status.isCanVote()) {
             throw new RuntimeException("Vote cooldown not expired. Try again in " + 
                 status.getSecondsRemaining() + " seconds");
         }
 
-        // 3. Find user account
+        // 4. Find user account
         Account account = accountRepository.findByName(username)
             .orElseThrow(() -> new RuntimeException("User not found: " + username));
 
-        // 4. Calculate rewards
-        int nxReward = NX_REWARDS.getOrDefault(voteSite, 5000);
+        // 5. Calculate base rewards
+        int baseNxReward = NX_REWARDS.getOrDefault(voteSite, 5000);
         int vpReward = VP_REWARDS.getOrDefault(voteSite, 1);
 
-        // 5. Give rewards to account
+        // 6. Apply tier multiplier to NX reward
+        int tierMultiplier = getTierMultiplier(account);
+        int finalNxReward = baseNxReward * tierMultiplier;
+
+        // 7. Give rewards to account
         int currentNX = (account.getPaypalNX() != null) ? account.getPaypalNX() : 0;
         int currentVP = (account.getVPoints() != null) ? account.getVPoints() : 0;
         
-        account.setPaypalNX(currentNX + nxReward);
+        account.setPaypalNX(currentNX + finalNxReward);
         account.setVPoints(currentVP + vpReward);
         accountRepository.save(account);
 
-        // 6. Save vote record
+        // 7. Save vote record
         Vote vote = new Vote();
         vote.setUsername(username);
         vote.setVoteSite(voteSite);
         vote.setVotedAt(LocalDateTime.now());
         vote.setIpAddress(ipAddress);
-        vote.setNxRewarded(nxReward);
+        vote.setNxRewarded(finalNxReward);  // Save actual rewarded amount
         vote.setVotePointsRewarded(vpReward);
         voteRepository.save(vote);
+
+        // 8. Update user's tier after voting
+        updateUserTier(account);
     }
 
     /**
@@ -176,5 +198,53 @@ public class VoteService {
      */
     public long getUserVoteCount(String username) {
         return voteRepository.countByUsername(username);
+    }
+
+    /**
+     * Calculate and update user's voting tier based on total votes
+     */
+    private void updateUserTier(Account account) {
+        long totalVotes = voteRepository.countByUsername(account.getName());
+        VoteTier newTier = VoteTier.calculateTier(totalVotes);
+        account.setVoteTier(newTier.name());
+        accountRepository.save(account);
+    }
+
+    /**
+     * Get current tier multiplier for user
+     */
+    private int getTierMultiplier(Account account) {
+        try {
+            VoteTier tier = VoteTier.valueOf(account.getVoteTier());
+            return tier.getMultiplier();
+        } catch (IllegalArgumentException e) {
+            return 1; // Default to NONE tier
+        }
+    }
+
+    /**
+     * Get user's voting tier information
+     */
+    public VoteTierDTO getUserTierInfo(String username) {
+        long totalVotes = voteRepository.countByUsername(username);
+        VoteTier currentTier = VoteTier.calculateTier(totalVotes);
+        VoteTier nextTier = currentTier.getNextTier();
+
+        long votesUntilNext = 0;
+        int nextMultiplier = currentTier.getMultiplier();
+
+        if (nextTier != null) {
+            votesUntilNext = nextTier.getVotesRequired() - totalVotes;
+            nextMultiplier = nextTier.getMultiplier();
+        }
+
+        return new VoteTierDTO(
+            currentTier.name(),
+            totalVotes,
+            nextTier != null ? nextTier.name() : null,
+            votesUntilNext,
+            currentTier.getMultiplier(),
+            nextMultiplier
+        );
     }
 }
