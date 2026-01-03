@@ -14,12 +14,12 @@ public class RegisterRequest {
     private String username;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters long")
+    @Size(min = 8, message = "Password is too short. Please use at least 8 characters for better security")
     @Schema(example = "MySecretPass!1", description = "The user's password (minimum 8 characters)")
     private String password;
 
     @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
+    @Email(message = "Invalid email format. Please enter a valid email address (e.g., example@domain.com)")
     @Schema(example = "player@example.com", description = "Valid email address")
     private String email;
 
