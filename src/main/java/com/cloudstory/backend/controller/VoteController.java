@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.HashMap;
 import java.util.List;
@@ -51,42 +52,49 @@ public class VoteController {
 
     /**
      * Callback endpoint for voting sites
-     * Supports multiple formats:
+     * Supports multiple formats and both GET/POST methods:
      * 
      * GTOP100 (POST/JSON):
      *   - pb_name: Username from pingback
      *   - pingbackkey: Secret key
      *   - ip: Voter IP address
      * 
-     * TopG (Query Parameters):
+     * TopG (GET):
      *   - p_resp: Username (from URL parameter in vote link)
      *   - ip: Voter IP
      *   - key: Secret key
      * 
-     * XtremeTop100 (Query Parameters):
+     * XtremeTop100 (GET):
      *   - custom: Username (from postback parameter in vote link)
      *   - votingip: Voter IP
      *   - key: Secret key (in Authorization header or from config)
      * 
-     * Arena-Top100 (Query Parameters):
-     *   - username: Player username
-     *   - key: Secret key
+     * Arena-Top100 (GET/POST):
+     *   - userid: Player username (sent as id= or postback= or incentive=)
+     *   - secret: Secret key
+     *   - voted: "1" for success, "0" for failure
+     *   - userip: Voter IP
      * 
      * @param site The voting site name (gtop100, topg, xtremetop100, arena-top100)
      * @param username Optional: username from query parameters
+     * @param userid Optional: Arena-Top100 username parameter
      * @param key Optional: secret key from query parameters
      * @param pb_name Optional: GTOP100 username
      * @param pingbackkey Optional: GTOP100 secret key
      * @param p_resp Optional: TopG username
      * @param custom Optional: XtremeTop100 username
      * @param votingip Optional: XtremeTop100 voter IP
+     * @param userip Optional: Arena-Top100 voter IP
+     * @param secret Optional: Arena-Top100 secret key
+     * @param voted Optional: Arena-Top100 voted flag (1=success, 0=failure)
      * @param request HTTP request to get IP address and/or POST body
      * @return Success or error message
      */
-    @PostMapping("/callback/{site}")
+    @RequestMapping(path = "/callback/{site}", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<?> voteCallback(
             @PathVariable String site,
             @RequestParam(required = false) String username,
+            @RequestParam(required = false) String userid,
             @RequestParam(required = false) String key,
             @RequestParam(required = false) String pb_name,
             @RequestParam(required = false) String pingbackkey,
@@ -94,6 +102,7 @@ public class VoteController {
             @RequestParam(required = false) String ip,
             @RequestParam(required = false) String custom,
             @RequestParam(required = false) String votingip,
+            @RequestParam(required = false) String userip,
             @RequestParam(required = false) String secret,
             @RequestParam(required = false) String voted,
             HttpServletRequest request) {
@@ -120,9 +129,11 @@ public class VoteController {
                 finalUsername = custom;
                 finalIp = votingip;
             }
-            // Handle Arena-Top100 (uses username, secret, and voted flag)
+            // Handle Arena-Top100 (uses userid, secret, userip, and voted flag)
             else if ("arena-top100".equals(site)) {
+                finalUsername = userid; // Arena-Top100 sends userid (from id= or postback= or incentive=)
                 finalKey = secret;
+                finalIp = userip;
                 // Check if vote was successful (1=success, 0=failed)
                 voteSuccess = "1".equals(voted);
             }
