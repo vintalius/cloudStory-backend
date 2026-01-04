@@ -135,6 +135,8 @@ public class VoteService {
         // 5. Calculate base rewards
         int baseNxReward = NX_REWARDS.getOrDefault(voteSite, 5000);
         int vpReward = VP_REWARDS.getOrDefault(voteSite, 1);
+        
+        System.out.println("DEBUG: Base rewards - NX: " + baseNxReward + ", VP: " + vpReward);
 
         // 6. Apply tier multiplier to NX reward
         int tierMultiplier = getTierMultiplier(account);
@@ -148,7 +150,7 @@ public class VoteService {
         account.setVPoints(currentVP + vpReward);
         accountRepository.save(account);
         
-        System.out.println("DEBUG: Account saved with NX: " + account.getPaypalNX());
+        System.out.println("DEBUG: Account saved with NX: " + account.getPaypalNX() + ", VP: " + account.getVPoints());
 
         // 7. Save vote record
         Vote vote = new Vote();
