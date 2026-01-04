@@ -108,6 +108,11 @@ public class VoteController {
             HttpServletRequest request) {
         
         try {
+            // Debug logging for Arena-Top100
+            if ("arena-top100".equals(site)) {
+                System.out.println("ARENA DEBUG: userid=" + userid + ", secret=" + secret + ", voted=" + voted + ", userip=" + userip);
+            }
+            
             // Determine username and secret based on voting site
             String finalUsername = username;
             String finalKey = key;
