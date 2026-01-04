@@ -53,12 +53,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/rankings/**").permitAll()
                 .requestMatchers("/api/status/**").permitAll()
                 .requestMatchers("/api/debug/**").permitAll() // Debug endpoints
+                .requestMatchers("/api/vote/callback/**").permitAll() // Voting site callbacks (no auth needed)
                 // 2. Swagger/OpenAPI is public
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/*").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/v3/api-docs", "/api-docs/**", "/api-docs").permitAll()
                 .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                 // 3. Protected endpoints - require JWT authentication
                 .requestMatchers("/api/user/**").authenticated()
+                .requestMatchers("/api/vote/**").authenticated() // Vote endpoints (except callback) need auth
                 // 4. Everything else requires authentication
                 .anyRequest().authenticated()
             );
