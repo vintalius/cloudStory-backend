@@ -38,13 +38,13 @@ public class Account {
     private Integer gm;
 
     @Column(name = "paypalNX")
-    private Integer paypalNX;
+    private Integer paypalNX = 0;
 
     @Column(name = "mPoints")
-    private Integer mPoints;
+    private Integer mPoints = 0;
 
     @Column(name = "vPoints")
-    private Integer vPoints;
+    private Integer vPoints = 0;
 
     @Column(length = 20)
     private String voteTier = "NONE";
