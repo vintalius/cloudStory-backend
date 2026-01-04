@@ -14,17 +14,19 @@ public class Vote {
     @Column(nullable = false, length = 50)
     private String username;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "vote_site", nullable = false, length = 50)
     private String voteSite;
 
-    @Column(nullable = false)
+    @Column(name = "voted_at", nullable = false)
     private LocalDateTime votedAt;
 
-    @Column(length = 45)
+    @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
+    @Column(name = "nx_rewarded")
     private Integer nxRewarded;
 
+    @Column(name = "vote_points_rewarded")
     private Integer votePointsRewarded;
 
     // Constructors
