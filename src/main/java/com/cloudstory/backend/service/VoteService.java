@@ -129,6 +129,8 @@ public class VoteService {
         // 4. Find user account
         Account account = accountRepository.findByName(username)
             .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        
+        System.out.println("DEBUG: Found account: " + account.getName() + " (ID: " + account.getId() + ")");
 
         // 5. Calculate base rewards
         int baseNxReward = NX_REWARDS.getOrDefault(voteSite, 5000);
@@ -145,6 +147,8 @@ public class VoteService {
         account.setPaypalNX(currentNX + finalNxReward);
         account.setVPoints(currentVP + vpReward);
         accountRepository.save(account);
+        
+        System.out.println("DEBUG: Account saved with NX: " + account.getPaypalNX());
 
         // 7. Save vote record
         Vote vote = new Vote();
@@ -155,9 +159,13 @@ public class VoteService {
         vote.setNxRewarded(finalNxReward);  // Save actual rewarded amount
         vote.setVotePointsRewarded(vpReward);
         voteRepository.save(vote);
+        
+        System.out.println("DEBUG: Vote saved to database");
 
         // 8. Update user's tier after voting
         updateUserTier(account);
+        
+        System.out.println("DEBUG: User tier updated");
     }
 
     /**
@@ -204,6 +212,9 @@ public class VoteService {
      * Calculate and update user's voting tier based on total votes
      */
     private void updateUserTier(Account account) {
+        if (account == null || account.getName() == null) {
+            throw new RuntimeException("Account or account name is null");
+        }
         long totalVotes = voteRepository.countByUsername(account.getName());
         VoteTier newTier = VoteTier.calculateTier(totalVotes);
         account.setVoteTier(newTier.name());
