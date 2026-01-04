@@ -17,8 +17,8 @@ public class UserResponse {
     private String email;
 
     @Schema(example = "500", description = "NX Cash balance")
-    @JsonProperty("paypalNX")
-    private Integer paypalNX;
+    @JsonProperty("nxCredit")
+    private Integer nxCredit;
 
     @Schema(example = "1000", description = "Maple Points balance")
     @JsonProperty("mPoints")
@@ -32,11 +32,11 @@ public class UserResponse {
     private LocalDateTime createdAt;
 
     // Constructor
-    public UserResponse(Integer id, String name, String email, Integer paypalNX, Integer mPoints, Integer vPoints, LocalDateTime createdAt) {
+    public UserResponse(Integer id, String name, String email, Integer nxCredit, Integer mPoints, Integer vPoints, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
-        this.paypalNX = paypalNX;
+        this.nxCredit = nxCredit;
         this.mPoints = mPoints;
         this.vPoints = vPoints;
         this.createdAt = createdAt;
@@ -52,8 +52,8 @@ public class UserResponse {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public Integer getPaypalNX() { return paypalNX; }
-    public void setPaypalNX(Integer paypalNX) { this.paypalNX = paypalNX; }
+    public Integer getNxCredit() { return nxCredit; }
+    public void setNxCredit(Integer nxCredit) { this.nxCredit = nxCredit; }
 
     public Integer getMPoints() { return mPoints; }
     public void setMPoints(Integer mPoints) { this.mPoints = mPoints; }
