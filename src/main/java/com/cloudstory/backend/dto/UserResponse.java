@@ -2,6 +2,7 @@ package com.cloudstory.backend.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public class UserResponse {
@@ -16,12 +17,15 @@ public class UserResponse {
     private String email;
 
     @Schema(example = "500", description = "NX Cash balance")
+    @JsonProperty("paypalNX")
     private Integer paypalNX;
 
     @Schema(example = "1000", description = "Maple Points balance")
+    @JsonProperty("mPoints")
     private Integer mPoints;
 
     @Schema(example = "50", description = "Vote Points balance")
+    @JsonProperty("vPoints")
     private Integer vPoints;
 
     @Schema(example = "2024-12-23T10:30:00", description = "Account creation date")
