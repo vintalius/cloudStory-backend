@@ -226,10 +226,14 @@ public class VoteService {
      */
     private int getTierMultiplier(Account account) {
         try {
-            VoteTier tier = VoteTier.valueOf(account.getVoteTier());
-            return tier.getMultiplier();
-        } catch (IllegalArgumentException e) {
-            return 1; // Default to NONE tier
+            String tier = account.getVoteTier();
+            if (tier == null || tier.isEmpty()) {
+                tier = "NONE"; // Default tier
+            }
+            VoteTier voteTier = VoteTier.valueOf(tier);
+            return voteTier.getMultiplier();
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return 1; // Default to NONE tier multiplier
         }
     }
 
