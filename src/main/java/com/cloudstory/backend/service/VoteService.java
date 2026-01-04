@@ -143,14 +143,24 @@ public class VoteService {
         int finalNxReward = baseNxReward * tierMultiplier;
 
         // 7. Give rewards to account
-        int currentNX = (account.getPaypalNX() != null) ? account.getPaypalNX() : 0;
+        // Update ALL NX fields so it shows in both website and game
+        int currentPaypalNX = (account.getPaypalNX() != null) ? account.getPaypalNX() : 0;
+        int currentNxCredit = (account.getNxCredit() != null) ? account.getNxCredit() : 0;
+        int currentMaplePoint = (account.getMaplePoint() != null) ? account.getMaplePoint() : 0;
         int currentVP = (account.getVPoints() != null) ? account.getVPoints() : 0;
         
-        account.setPaypalNX(currentNX + finalNxReward);
+        // Update all NX types
+        account.setPaypalNX(currentPaypalNX + finalNxReward);  // For website
+        account.setNxCredit(currentNxCredit + finalNxReward);  // For in-game Cash Shop
+        account.setMaplePoint(currentMaplePoint + finalNxReward);  // For Maple Points
         account.setVPoints(currentVP + vpReward);
         accountRepository.save(account);
         
-        System.out.println("DEBUG: Account saved with NX: " + account.getPaypalNX() + ", VP: " + account.getVPoints());
+        System.out.println("DEBUG: Account saved:");
+        System.out.println("  - PaypalNX: " + account.getPaypalNX());
+        System.out.println("  - NxCredit: " + account.getNxCredit());
+        System.out.println("  - MaplePoint: " + account.getMaplePoint());
+        System.out.println("  - VPoints: " + account.getVPoints());
 
         // 7. Save vote record
         Vote vote = new Vote();
