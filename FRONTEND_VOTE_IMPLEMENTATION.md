@@ -40,7 +40,7 @@ export const VOTE_SITES = {
     name: "Arena-Top100",
     baseUrl: "https://www.arena-top100.com/index.php",
     buildLink: (username: string) =>
-      `https://www.arena-top100.com/index.php?a=in&u=cloudstory&id=${username}`,
+      `https://www.arena-top100.com/index.php?a=in&u=vintalius&id=${username}`,
     cooldown: 24, // hours
   },
 };
