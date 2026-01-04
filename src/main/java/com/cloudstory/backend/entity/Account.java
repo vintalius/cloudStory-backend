@@ -37,13 +37,16 @@ public class Account {
     @Column(name = "gm")
     private Integer gm;
 
-    @Column(name = "nx_credit")
+    @Column(name = "nxCredit")
     private Integer nxCredit = 0;
 
-    @Column(name = "m_points")
+    @Column(name = "nxPrepaid")
+    private Integer nxPrepaid = 0;
+
+    @Column(name = "maplePoint")
     private Integer mPoints = 0;
 
-    @Column(name = "v_points")
+    @Column(name = "votepoints")
     private Integer vPoints = 0;
 
     @Column(length = 20)
@@ -83,6 +86,9 @@ public class Account {
 
     public Integer getNxCredit() { return nxCredit; }
     public void setNxCredit(Integer nxCredit) { this.nxCredit = nxCredit; }
+
+    public Integer getNxPrepaid() { return nxPrepaid; }
+    public void setNxPrepaid(Integer nxPrepaid) { this.nxPrepaid = nxPrepaid; }
 
     public Integer getMPoints() { return mPoints; }
     public void setMPoints(Integer mPoints) { this.mPoints = mPoints; }
