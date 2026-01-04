@@ -43,7 +43,7 @@ public class UserController {
                     account.getId(),
                     account.getName(),
                     account.getEmail(),
-                    account.getPaypalNX() != null ? account.getPaypalNX() : 0,
+                    account.getNxCredit() != null ? account.getNxCredit() : 0,
                     account.getMPoints() != null ? account.getMPoints() : 0,
                     account.getVPoints() != null ? account.getVPoints() : 0,
                     account.getCreatedAt()

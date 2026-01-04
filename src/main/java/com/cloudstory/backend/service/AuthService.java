@@ -43,7 +43,7 @@ public class AuthService {
         
         account.setLoggedin(0);
         account.setGm(0);
-        account.setPaypalNX(0);
+        account.setNxCredit(0);
         account.setMPoints(0);
         account.setVPoints(0);
 
