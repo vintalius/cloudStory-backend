@@ -49,6 +49,8 @@ public class UserController {
                     account.getCreatedAt()
             );
 
+            System.out.println("DEBUG: UserResponse created - vPoints: " + userResponse.getVPoints());
+
             return ResponseEntity.ok(userResponse);
         } catch (Exception e) {
             return ResponseEntity.status(404).body("User not found");
