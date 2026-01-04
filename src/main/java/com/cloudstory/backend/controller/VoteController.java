@@ -112,6 +112,20 @@ public class VoteController {
             HttpServletRequest request) {
         
         try {
+            // Sanitize parameters (handle comma-separated duplicates)
+            username = sanitizeParam(username);
+            userid = sanitizeParam(userid);
+            key = sanitizeParam(key);
+            pb_name = sanitizeParam(pb_name);
+            pingbackkey = sanitizeParam(pingbackkey);
+            p_resp = sanitizeParam(p_resp);
+            ip = sanitizeParam(ip);
+            custom = sanitizeParam(custom);
+            votingip = sanitizeParam(votingip);
+            userip = sanitizeParam(userip);
+            secret = sanitizeParam(secret);
+            voted = sanitizeParam(voted);
+
             logger.info("=== VOTE CALLBACK START ===");
             logger.info("Site: {}", site);
             logger.info("Parameters - username: {}, userid: {}, key: {}, pb_name: {}, pingbackkey: {}, p_resp: {}, ip: {}, custom: {}, votingip: {}, userip: {}, secret: {}, voted: {}", 
@@ -289,5 +303,12 @@ public class VoteController {
         }
         
         return request.getRemoteAddr();
+    }
+
+    private String sanitizeParam(String param) {
+        if (param != null && param.contains(",")) {
+            return param.split(",")[0].trim();
+        }
+        return param;
     }
 }
