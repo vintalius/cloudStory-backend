@@ -37,16 +37,13 @@ public class Account {
     @Column(name = "gm")
     private Integer gm;
 
-    @Column(name = "paypalnx")
-    private Integer paypalNX = 0;
-
-    @Column(name = "nxCredit")
+    @Column(name = "nx_credit")
     private Integer nxCredit = 0;
 
-    @Column(name = "nxPrepaid")
+    @Column(name = "nx_prepaid")
     private Integer nxPrepaid = 0;
 
-    @Column(name = "maplePoint")
+    @Column(name = "maple_point")
     private Integer maplePoint = 0;
 
     @Column(name = "m_points")
@@ -89,9 +86,6 @@ public class Account {
 
     public Integer getGm() { return gm; }
     public void setGm(Integer gm) { this.gm = gm; }
-
-    public Integer getPaypalNX() { return paypalNX; }
-    public void setPaypalNX(Integer paypalNX) { this.paypalNX = paypalNX; }
 
     public Integer getNxCredit() { return nxCredit; }
     public void setNxCredit(Integer nxCredit) { this.nxCredit = nxCredit; }

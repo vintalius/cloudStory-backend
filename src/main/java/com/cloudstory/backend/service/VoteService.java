@@ -142,25 +142,24 @@ public class VoteService {
         int tierMultiplier = getTierMultiplier(account);
         int finalNxReward = baseNxReward * tierMultiplier;
 
-        // 7. Give rewards to account
-        // Update ALL NX fields so it shows in both website and game
-        int currentPaypalNX = (account.getPaypalNX() != null) ? account.getPaypalNX() : 0;
+        // 7. Give rewards to account - UPDATE nx_credit ONLY
+        // This is the single source of truth for NX balance
+        // Both game and website read from nx_credit
         int currentNxCredit = (account.getNxCredit() != null) ? account.getNxCredit() : 0;
-        int currentMaplePoint = (account.getMaplePoint() != null) ? account.getMaplePoint() : 0;
         int currentVP = (account.getVPoints() != null) ? account.getVPoints() : 0;
         
-        // Update all NX types
-        account.setPaypalNX(currentPaypalNX + finalNxReward);  // For website
-        account.setNxCredit(currentNxCredit + finalNxReward);  // For in-game Cash Shop
-        account.setMaplePoint(currentMaplePoint + finalNxReward);  // For Maple Points
+        int newNxAmount = currentNxCredit + finalNxReward;
+        
+        // Update ONLY nx_credit (single source of truth)
+        account.setNxCredit(newNxAmount);
         account.setVPoints(currentVP + vpReward);
+        
         accountRepository.save(account);
         
-        System.out.println("DEBUG: Account saved:");
-        System.out.println("  - PaypalNX: " + account.getPaypalNX());
-        System.out.println("  - NxCredit: " + account.getNxCredit());
-        System.out.println("  - MaplePoint: " + account.getMaplePoint());
+        System.out.println("DEBUG: Account NX updated (single source of truth):");
+        System.out.println("  - NX Credit: " + account.getNxCredit());
         System.out.println("  - VPoints: " + account.getVPoints());
+        System.out.println("  - Reward given: " + finalNxReward + " NX (x" + tierMultiplier + " multiplier)");
 
         // 7. Save vote record
         Vote vote = new Vote();
