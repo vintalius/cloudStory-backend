@@ -1,12 +1,12 @@
 package com.cloudstory.backend.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.cloudstory.backend.dto.RegisterRequest;
 import com.cloudstory.backend.entity.Account;
 import com.cloudstory.backend.repository.AccountRepository;
-import com.cloudstory.backend.util.PasswordUtil;
 
 @Service
 public class AuthService {
@@ -16,6 +16,9 @@ public class AuthService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public String register(RegisterRequest request) {
         if (accountRepository.existsByName(request.getUsername())) {
@@ -30,7 +33,7 @@ public class AuthService {
         account.setEmail(request.getEmail());
         
         // Hash the password
-        account.setPassword(PasswordUtil.hashPassword(request.getPassword()));
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
         
         // --- Hardcoded Defaults (כדי שהמשחק לא יקרוס) ---
         
