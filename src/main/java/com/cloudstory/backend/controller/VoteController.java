@@ -6,6 +6,8 @@ import com.cloudstory.backend.entity.Vote;
 import com.cloudstory.backend.service.VoteService;
 import com.cloudstory.backend.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/vote")
 public class VoteController {
+
+    private static final Logger logger = LoggerFactory.getLogger(VoteController.class);
 
     @Autowired
     private VoteService voteService;
@@ -108,9 +112,14 @@ public class VoteController {
             HttpServletRequest request) {
         
         try {
+            logger.info("=== VOTE CALLBACK START ===");
+            logger.info("Site: {}", site);
+            logger.info("Parameters - username: {}, userid: {}, key: {}, pb_name: {}, pingbackkey: {}, p_resp: {}, ip: {}, custom: {}, votingip: {}, userip: {}, secret: {}, voted: {}", 
+                username, userid, key, pb_name, pingbackkey, p_resp, ip, custom, votingip, userip, secret, voted);
+            
             // Debug logging for Arena-Top100
             if ("arena-top100".equals(site)) {
-                System.out.println("ARENA DEBUG: userid=" + userid + ", secret=" + secret + ", voted=" + voted + ", userip=" + userip);
+                logger.warn("ARENA DEBUG: userid={}, secret={}, voted={}, userip={}", userid, secret, voted, userip);
             }
             
             // Determine username and secret based on voting site
@@ -143,8 +152,11 @@ public class VoteController {
                 voteSuccess = "1".equals(voted);
             }
             
+            logger.info("Processed - finalUsername: {}, finalKey: {}, finalIp: {}, voteSuccess: {}", finalUsername, finalKey, finalIp, voteSuccess);
+            
             // Validate required parameters
             if (finalUsername == null || finalUsername.isEmpty()) {
+                logger.error("Username not provided for site: {}", site);
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "error", "Username not provided"
@@ -154,6 +166,7 @@ public class VoteController {
             // For sites that require key validation
             if (("gtop100".equals(site) || "arena-top100".equals(site))) {
                 if (finalKey == null || finalKey.isEmpty()) {
+                    logger.error("Secret key not provided for site: {}", site);
                     return ResponseEntity.badRequest().body(Map.of(
                         "success", false,
                         "error", "Secret key not provided"
@@ -166,8 +179,10 @@ public class VoteController {
                 finalIp = getClientIpAddress(request);
             }
             
+            logger.info("Calling processVote with username: {}, site: {}, ip: {}, voteSuccess: {}", finalUsername, site, finalIp, voteSuccess);
             voteService.processVote(finalUsername, site, finalKey, finalIp, voteSuccess);
             
+            logger.info("Vote processed successfully");
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Vote recorded successfully",
@@ -175,6 +190,7 @@ public class VoteController {
                 "site", site
             ));
         } catch (Exception e) {
+            logger.error("Error processing vote callback", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "error", e.getMessage()
