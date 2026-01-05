@@ -109,6 +109,8 @@ public class VoteController {
             @RequestParam(required = false) String userip,
             @RequestParam(required = false) String secret,
             @RequestParam(required = false) String voted,
+            @RequestParam(required = false) String pingUsername,
+            @RequestParam(required = false) String VoterIP,
             HttpServletRequest request) {
         
         try {
@@ -118,6 +120,8 @@ public class VoteController {
             key = sanitizeParam(key);
             pb_name = sanitizeParam(pb_name);
             pingbackkey = sanitizeParam(pingbackkey);
+            pingUsername = sanitizeParam(pingUsername);
+            VoterIP = sanitizeParam(VoterIP);
             p_resp = sanitizeParam(p_resp);
             ip = sanitizeParam(ip);
             custom = sanitizeParam(custom);
@@ -142,13 +146,20 @@ public class VoteController {
             String finalIp = ip;
             boolean voteSuccess = true;
             
-            // Handle GTOP100 (uses pb_name and pingbackkey, or username and key)
+            // Handle GTOP100 (uses pb_name and pingbackkey, or username and key, or pingUsername and VoterIP)
             if ("gtop100".equals(site)) {
                 if (pb_name != null && !pb_name.isEmpty()) {
                     finalUsername = pb_name;
+                } else if (pingUsername != null && !pingUsername.isEmpty()) {
+                    finalUsername = pingUsername;
                 }
+                
                 if (pingbackkey != null && !pingbackkey.isEmpty()) {
                     finalKey = pingbackkey;
+                }
+                
+                if (VoterIP != null && !VoterIP.isEmpty()) {
+                    finalIp = VoterIP;
                 }
             }
             // Handle TopG (uses p_resp and ip)
