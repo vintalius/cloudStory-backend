@@ -142,10 +142,14 @@ public class VoteController {
             String finalIp = ip;
             boolean voteSuccess = true;
             
-            // Handle GTOP100 (uses pb_name and pingbackkey)
+            // Handle GTOP100 (uses pb_name and pingbackkey, or username and key)
             if ("gtop100".equals(site)) {
-                finalUsername = pb_name;
-                finalKey = pingbackkey;
+                if (pb_name != null && !pb_name.isEmpty()) {
+                    finalUsername = pb_name;
+                }
+                if (pingbackkey != null && !pingbackkey.isEmpty()) {
+                    finalKey = pingbackkey;
+                }
             }
             // Handle TopG (uses p_resp and ip)
             else if ("topg".equals(site)) {
