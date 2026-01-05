@@ -321,51 +321,49 @@ public class VoteController {
     }
 
     /**
-     * Dedicated endpoint for GTOP100 POST requests with JSON body
-     * GTOP100 sends pingUsername and VoterIP in the request body
+     * Dedicated endpoint for GTOP100 POST requests
+     * Supports two formats:
+     * 1. JSON batch format (recommended): Contains "Common" array with up to 50 votes
+     *    - Each vote has: pb_name, ip, success (0=success, 1=fail), reason
+     *    - pingbackkey is at root level
+     * 2. POST form data: Single vote with pingUsername, VoterIP, Successful, pingbackkey
      */
     @PostMapping("/callback/gtop100")
-    public ResponseEntity<?> gtop100Callback(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+    public ResponseEntity<?> gtop100Callback(@RequestBody(required = false) Map<String, Object> body, 
+                                              @RequestParam(required = false) String pingUsername,
+                                              @RequestParam(required = false) String VoterIP,
+                                              @RequestParam(required = false) String Successful,
+                                              @RequestParam(required = false) String pingbackkey,
+                                              HttpServletRequest request) {
         try {
-            logger.info("=== GTOP100 JSON CALLBACK START ===");
-            logger.info("Body received: {}", body);
+            logger.info("=== GTOP100 CALLBACK START ===");
+            logger.info("Body: {}", body);
+            logger.info("Params - pingUsername: {}, VoterIP: {}, Successful: {}, pingbackkey: {}", 
+                pingUsername, VoterIP, Successful, pingbackkey);
             
-            // Extract fields from JSON body
-            String pingUsername = (String) body.get("pingUsername");
-            String voterIP = (String) body.get("VoterIP");
-            String pingbackkey = (String) body.get("pingbackkey");
-            
-            logger.info("GTOP100 - pingUsername: {}, voterIP: {}, pingbackkey: {}", pingUsername, voterIP, pingbackkey);
-            
-            // Validate required parameters
-            if (pingUsername == null || pingUsername.isEmpty()) {
-                logger.error("GTOP100: Username (pingUsername) not provided");
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", "Username not provided"
-                ));
+            // Check if this is JSON batch format
+            if (body != null && body.containsKey("Common")) {
+                return handleGtop100JsonBatch(body, request);
+            }
+            // Handle POST form data format
+            else if (pingUsername != null || VoterIP != null) {
+                return handleGtop100PostForm(pingUsername, VoterIP, Successful, pingbackkey, request);
+            }
+            // Try to extract from JSON body (fallback for non-batch JSON)
+            else if (body != null) {
+                String user = (String) body.get("pingUsername");
+                String ip = (String) body.get("VoterIP");
+                String success = (String) body.get("Successful");
+                String key = (String) body.get("pingbackkey");
+                return handleGtop100PostForm(user, ip, success, key, request);
             }
             
-            if (pingbackkey == null || pingbackkey.isEmpty()) {
-                logger.error("GTOP100: Secret key (pingbackkey) not provided");
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", "Secret key not provided"
-                ));
-            }
-            
-            // Use provided IP or get from request
-            String finalIp = (voterIP != null && !voterIP.isEmpty()) ? voterIP : getClientIpAddress(request);
-            
-            logger.info("Processing GTOP100 vote - username: {}, ip: {}, key: {}", pingUsername, finalIp, pingbackkey);
-            voteService.processVote(pingUsername, "gtop100", pingbackkey, finalIp, true);
-            
-            logger.info("GTOP100 vote processed successfully");
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Vote recorded successfully",
-                "username", pingUsername
+            logger.error("GTOP100: No valid data format received");
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "error", "Invalid request format"
             ));
+            
         } catch (Exception e) {
             logger.error("Error processing GTOP100 callback", e);
             return ResponseEntity.badRequest().body(Map.of(
@@ -373,6 +371,103 @@ public class VoteController {
                 "error", e.getMessage()
             ));
         }
+    }
+    
+    /**
+     * Handle GTOP100 JSON batch format (recommended by GTOP100)
+     * Structure: { "siteid": 12345, "pingbackkey": "...", "Common": [[{pb_id:1},{ip:"..."},{success:0},{pb_name:"Player1"}],...] }
+     */
+    private ResponseEntity<?> handleGtop100JsonBatch(Map<String, Object> body, HttpServletRequest request) {
+        logger.info("Processing GTOP100 JSON batch format");
+        
+        String pingbackkey = (String) body.get("pingbackkey");
+        if (pingbackkey == null || pingbackkey.isEmpty()) {
+            logger.error("GTOP100 JSON: Missing pingbackkey");
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Missing pingbackkey"));
+        }
+        
+        @SuppressWarnings("unchecked")
+        List<List<Map<String, Object>>> commonArray = (List<List<Map<String, Object>>>) body.get("Common");
+        
+        if (commonArray == null || commonArray.isEmpty()) {
+            logger.error("GTOP100 JSON: Empty Common array");
+            return ResponseEntity.ok(Map.of("success", true, "message", "No votes to process"));
+        }
+        
+        int processed = 0;
+        int failed = 0;
+        
+        for (List<Map<String, Object>> voteEntry : commonArray) {
+            try {
+                // Flatten the nested structure: [[{pb_id:1},{ip:"x"},{success:0},{pb_name:"y"}]]
+                Map<String, Object> flattenedVote = new HashMap<>();
+                for (Map<String, Object> field : voteEntry) {
+                    flattenedVote.putAll(field);
+                }
+                
+                String pb_name = (String) flattenedVote.get("pb_name");
+                String ip = (String) flattenedVote.get("ip");
+                Integer success = (Integer) flattenedVote.get("success"); // 0 = success, 1 = failed
+                
+                logger.info("GTOP100 Batch Vote - pb_name: {}, ip: {}, success: {}", pb_name, ip, success);
+                
+                if (pb_name == null || pb_name.isEmpty()) {
+                    logger.warn("GTOP100: Skipping vote - no pb_name");
+                    failed++;
+                    continue;
+                }
+                
+                boolean voteSuccess = (success != null && success == 0);
+                String finalIp = (ip != null && !ip.isEmpty()) ? ip : getClientIpAddress(request);
+                
+                voteService.processVote(pb_name, "gtop100", pingbackkey, finalIp, voteSuccess);
+                processed++;
+                
+            } catch (Exception e) {
+                logger.error("Error processing GTOP100 batch vote", e);
+                failed++;
+            }
+        }
+        
+        logger.info("GTOP100 Batch processed: {} successful, {} failed", processed, failed);
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "processed", processed,
+            "failed", failed
+        ));
+    }
+    
+    /**
+     * Handle GTOP100 POST form data format
+     * Parameters: pingUsername, VoterIP, Successful (0=success), pingbackkey
+     */
+    private ResponseEntity<?> handleGtop100PostForm(String pingUsername, String voterIP, 
+                                                     String successful, String pingbackkey,
+                                                     HttpServletRequest request) {
+        logger.info("Processing GTOP100 POST form - pingUsername: {}, voterIP: {}, successful: {}", 
+            pingUsername, voterIP, successful);
+        
+        if (pingUsername == null || pingUsername.isEmpty()) {
+            logger.error("GTOP100 POST: Missing pingUsername");
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Missing username"));
+        }
+        
+        if (pingbackkey == null || pingbackkey.isEmpty()) {
+            logger.error("GTOP100 POST: Missing pingbackkey");
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Missing pingbackkey"));
+        }
+        
+        boolean voteSuccess = "0".equals(successful); // 0 = success, 1 = failed
+        String finalIp = (voterIP != null && !voterIP.isEmpty()) ? voterIP : getClientIpAddress(request);
+        
+        voteService.processVote(pingUsername, "gtop100", pingbackkey, finalIp, voteSuccess);
+        
+        logger.info("GTOP100 POST vote processed successfully");
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "message", "Vote recorded successfully",
+            "username", pingUsername
+        ));
     }
 
     private String sanitizeParam(String param) {
