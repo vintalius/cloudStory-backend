@@ -320,6 +320,61 @@ public class VoteController {
         return request.getRemoteAddr();
     }
 
+    /**
+     * Dedicated endpoint for GTOP100 POST requests with JSON body
+     * GTOP100 sends pingUsername and VoterIP in the request body
+     */
+    @PostMapping("/callback/gtop100")
+    public ResponseEntity<?> gtop100Callback(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        try {
+            logger.info("=== GTOP100 JSON CALLBACK START ===");
+            logger.info("Body received: {}", body);
+            
+            // Extract fields from JSON body
+            String pingUsername = (String) body.get("pingUsername");
+            String voterIP = (String) body.get("VoterIP");
+            String pingbackkey = (String) body.get("pingbackkey");
+            
+            logger.info("GTOP100 - pingUsername: {}, voterIP: {}, pingbackkey: {}", pingUsername, voterIP, pingbackkey);
+            
+            // Validate required parameters
+            if (pingUsername == null || pingUsername.isEmpty()) {
+                logger.error("GTOP100: Username (pingUsername) not provided");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Username not provided"
+                ));
+            }
+            
+            if (pingbackkey == null || pingbackkey.isEmpty()) {
+                logger.error("GTOP100: Secret key (pingbackkey) not provided");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Secret key not provided"
+                ));
+            }
+            
+            // Use provided IP or get from request
+            String finalIp = (voterIP != null && !voterIP.isEmpty()) ? voterIP : getClientIpAddress(request);
+            
+            logger.info("Processing GTOP100 vote - username: {}, ip: {}, key: {}", pingUsername, finalIp, pingbackkey);
+            voteService.processVote(pingUsername, "gtop100", pingbackkey, finalIp, true);
+            
+            logger.info("GTOP100 vote processed successfully");
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Vote recorded successfully",
+                "username", pingUsername
+            ));
+        } catch (Exception e) {
+            logger.error("Error processing GTOP100 callback", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "error", e.getMessage()
+            ));
+        }
+    }
+
     private String sanitizeParam(String param) {
         if (param != null && param.contains(",")) {
             return param.split(",")[0].trim();
