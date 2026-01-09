@@ -35,7 +35,8 @@ public class SecurityConfig {
         // Use BCrypt PasswordEncoder (compatible with Game Server)
         return new BCryptPasswordEncoder();
     }
-
+ 
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
