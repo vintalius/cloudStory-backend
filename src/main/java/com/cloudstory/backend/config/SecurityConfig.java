@@ -36,7 +36,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
  
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -80,8 +80,8 @@ public class SecurityConfig {
             "http://localhost:3000",          // Local production build
             "http://127.0.0.1:5173",          // 127.0.0.1 React development
             "http://127.0.0.1:3000",          // 127.0.0.1 production
-            "http://72.60.127.22",            // VPS IP HTTP
-            "http://72.60.127.22:8080",       // VPS with port 8080
+            "http://72.62.175.50",            // VPS IP HTTP
+            "http://72.62.175.50:8080",       // VPS with port 8080
             "http://cloudstory.online",       // Domain HTTP
             "https://cloudstory.online",      // Domain HTTPS
             "https://www.cloudstory.online"   // Domain HTTPS with www
