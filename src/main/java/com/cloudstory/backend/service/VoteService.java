@@ -3,9 +3,11 @@ package com.cloudstory.backend.service;
 import com.cloudstory.backend.dto.VoteStatusDTO;
 import com.cloudstory.backend.dto.VoteTierDTO;
 import com.cloudstory.backend.entity.Account;
+import com.cloudstory.backend.entity.PendingNx;
 import com.cloudstory.backend.entity.Vote;
 import com.cloudstory.backend.enums.VoteTier;
 import com.cloudstory.backend.repository.AccountRepository;
+import com.cloudstory.backend.repository.PendingNxRepository;
 import com.cloudstory.backend.repository.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +27,9 @@ public class VoteService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private PendingNxRepository pendingNxRepository;
 
     // Inject secret keys from application.properties
     @Value("${vote.secret.gtop100:}")
@@ -142,26 +147,29 @@ public class VoteService {
         int tierMultiplier = getTierMultiplier(account);
         int finalNxReward = baseNxReward * tierMultiplier;
 
-        // 7. Give rewards to account - UPDATE nx_credit ONLY
-        // This is the single source of truth for NX balance
-        // Both game and website read from nx_credit
-        int currentNxCredit = (account.getNxCredit() != null) ? account.getNxCredit() : 0;
-        int currentVP = (account.getVPoints() != null) ? account.getVPoints() : 0;
+        // 7. Save rewards to PENDING_NX table (not directly to accounts)
+        // This prevents Cosmic from overwriting the NX when player logs out
+        // Cosmic will read from pending_nx on login and apply the rewards
+        PendingNx pendingReward = new PendingNx();
+        pendingReward.setAccountId(account.getId());
+        pendingReward.setUsername(username);
+        pendingReward.setNxCredit(finalNxReward);
+        pendingReward.setVotePoints(vpReward);
+        pendingReward.setRewardType("VOTE");
+        pendingReward.setRewardSite(voteSite);
+        pendingReward.setApplied(false);
         
-        int newNxAmount = currentNxCredit + finalNxReward;
+        pendingNxRepository.save(pendingReward);
         
-        // Update ONLY nx_credit (single source of truth)
-        account.setNxCredit(newNxAmount);
-        account.setVPoints(currentVP + vpReward);
-        
-        accountRepository.save(account);
-        
-        System.out.println("DEBUG: Account NX updated (single source of truth):");
-        System.out.println("  - NX Credit: " + account.getNxCredit());
-        System.out.println("  - VPoints: " + account.getVPoints());
-        System.out.println("  - Reward given: " + finalNxReward + " NX (x" + tierMultiplier + " multiplier)");
+        System.out.println("DEBUG: Pending reward saved to pending_nx table:");
+        System.out.println("  - Account ID: " + account.getId());
+        System.out.println("  - Username: " + username);
+        System.out.println("  - NX Credit: " + finalNxReward + " (x" + tierMultiplier + " multiplier)");
+        System.out.println("  - Vote Points: " + vpReward);
+        System.out.println("  - Site: " + voteSite);
+        System.out.println("  - Will be applied on next login");
 
-        // 7. Save vote record
+        // 8. Save vote record
         Vote vote = new Vote();
         vote.setUsername(username);
         vote.setVoteSite(voteSite);
@@ -173,7 +181,7 @@ public class VoteService {
         
         System.out.println("DEBUG: Vote saved to database");
 
-        // 8. Update user's tier after voting
+        // 9. Update user's tier after voting
         updateUserTier(account);
         
         System.out.println("DEBUG: User tier updated");

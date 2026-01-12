@@ -1,8 +1,10 @@
 package com.cloudstory.backend.controller;
 
+import com.cloudstory.backend.dto.PendingNxDTO;
 import com.cloudstory.backend.dto.VoteStatusDTO;
 import com.cloudstory.backend.dto.VoteTierDTO;
 import com.cloudstory.backend.entity.Vote;
+import com.cloudstory.backend.service.PendingNxService;
 import com.cloudstory.backend.service.VoteService;
 import com.cloudstory.backend.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +27,9 @@ public class VoteController {
 
     @Autowired
     private VoteService voteService;
+
+    @Autowired
+    private PendingNxService pendingNxService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -475,5 +480,30 @@ public class VoteController {
             return param.split(",")[0].trim();
         }
         return param;
+    }
+
+    /**
+     * Get pending NX rewards for the authenticated user
+     * These are rewards waiting to be applied on next game login
+     * 
+     * @param authHeader Authorization header with JWT token
+     * @return List of pending rewards
+     */
+    @GetMapping("/pending")
+    public ResponseEntity<?> getPendingRewards(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String username = getUsernameFromToken(authHeader);
+            List<PendingNxDTO> pendingRewards = pendingNxService.getPendingRewards(username);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "pending_rewards", pendingRewards,
+                "message", pendingRewards.isEmpty() 
+                    ? "No pending rewards" 
+                    : "You have " + pendingRewards.size() + " pending reward(s). Login to the game to receive them!"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

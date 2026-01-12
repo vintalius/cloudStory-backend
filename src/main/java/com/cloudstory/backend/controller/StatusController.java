@@ -25,7 +25,7 @@ public class StatusController {
     @Value("${game.expRate:1x}")
     private String expRate;
     
-    @Value("${game.dropRate:2x}")
+    @Value("${game.dropRate:1x}")
     private String dropRate;
     
     @Value("${game.mesoRate:1x}")
