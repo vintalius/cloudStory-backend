@@ -36,4 +36,17 @@ public class PendingNxService {
             ))
             .collect(Collectors.toList());
     }
+
+    /**
+     * Calculate total pending (unapplied) NX for a user
+     * @param username The username
+     * @return Total pending NX amount
+     */
+    public int getTotalPendingNx(String username) {
+        List<PendingNx> pendingList = pendingNxRepository.findByUsernameAndApplied(username, false);
+        
+        return pendingList.stream()
+            .mapToInt(p -> p.getNxCredit() != null ? p.getNxCredit() : 0)
+            .sum();
+    }
 }

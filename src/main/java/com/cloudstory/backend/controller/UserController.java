@@ -14,6 +14,7 @@ import com.cloudstory.backend.dto.ChangePasswordRequest;
 import com.cloudstory.backend.dto.UserResponse;
 import com.cloudstory.backend.entity.Account;
 import com.cloudstory.backend.repository.AccountRepository;
+import com.cloudstory.backend.service.PendingNxService;
 
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -28,6 +29,9 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PendingNxService pendingNxService;
+
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
         try {
@@ -38,12 +42,26 @@ public class UserController {
             Account account = accountRepository.findByName(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
+            // Get actual NX from DB
+            int actualNx = account.getNxCredit() != null ? account.getNxCredit() : 0;
+            
+            // Get pending (unapplied) NX
+            int pendingNx = pendingNxService.getTotalPendingNx(username);
+            
+            // Total NX = actual NX + pending NX that hasn't been applied yet
+            int totalNx = actualNx + pendingNx;
+
+            System.out.println("DEBUG: NX Calculation for " + username);
+            System.out.println("  - Actual NX (from DB): " + actualNx);
+            System.out.println("  - Pending NX (unapplied): " + pendingNx);
+            System.out.println("  - Total NX shown to user: " + totalNx);
+
             // Map to UserResponse (no password)
             UserResponse userResponse = new UserResponse(
                     account.getId(),
                     account.getName(),
                     account.getEmail(),
-                    account.getNxCredit() != null ? account.getNxCredit() : 0,
+                    totalNx,  // Show total including pending
                     account.getMPoints() != null ? account.getMPoints() : 0,
                     account.getVPoints() != null ? account.getVPoints() : 0,
                     account.getCreatedAt()
