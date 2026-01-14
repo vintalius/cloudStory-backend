@@ -54,10 +54,10 @@ public class VoteService {
 
     // NX rewards for each site
     private static final Map<String, Integer> NX_REWARDS = Map.of(
-        "gtop100", 5000,
+        "gtop100", 7000,
         "topg", 8000,
         "xtremetop100", 5000,
-        "arena-top100", 5000
+        "arena-top100", 7000
     );
 
     // Vote Points rewards for each site
