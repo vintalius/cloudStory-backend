@@ -31,12 +31,18 @@ public class StatusController {
     @Value("${game.mesoRate:1x}")
     private String mesoRate;
 
-    @GetMapping
-    public ResponseEntity<ServerStatusResponse> getStatus() {
-        // Update real online count from database (users with loggedin > 0)
+    /**
+     * Helper method to fetch and cache online count data - eliminates duplicate DB queries
+     */
+    private void updateOnlineCountData() {
         long realOnlineCount = accountRepository.countByLoggedinGreaterThan(0);
         onlineUsersSimulation.updateRealOnlineCount((int) realOnlineCount);
-        
+    }
+
+    @GetMapping
+    public ResponseEntity<ServerStatusResponse> getStatus() {
+        updateOnlineCountData();
+
         int displayCount = onlineUsersSimulation.getOnlineCount();
         int realCount = onlineUsersSimulation.getRealOnlineCount();
         boolean isSimulated = realCount < 10;
@@ -57,10 +63,8 @@ public class StatusController {
      */
     @GetMapping("/online-count")
     public ResponseEntity<OnlineCountResponse> getOnlineCount() {
-        // Update real online count from database (users with loggedin > 0)
-        long realOnlineCount = accountRepository.countByLoggedinGreaterThan(0);
-        onlineUsersSimulation.updateRealOnlineCount((int) realOnlineCount);
-        
+        updateOnlineCountData();
+
         int displayCount = onlineUsersSimulation.getOnlineCount();
         int realCount = onlineUsersSimulation.getRealOnlineCount();
         boolean isSimulated = realCount < 10;
