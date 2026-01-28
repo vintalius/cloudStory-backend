@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -58,9 +59,29 @@ public class AuthController {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${google.recaptcha.secret}")
+    private String recaptchaSecret;
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
+            // 1. Basic Validation
+            if (request.getRecaptchaToken() == null || request.getRecaptchaToken().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Captcha validation is required."));
+            }
+
+            // 2. Verify with Google
+            String verifyUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" 
+                               + recaptchaSecret + "&response=" + request.getRecaptchaToken();
+
+            RestTemplate restTemplate = new RestTemplate();
+            Map<String, Object> googleResponse = restTemplate.getForObject(verifyUrl, Map.class);
+
+            // 3. Check Result
+            if (googleResponse == null || !Boolean.TRUE.equals(googleResponse.get("success"))) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Captcha verification failed. Please try again."));
+            }
+
             String message = authService.register(request);
             return ResponseEntity.ok(Map.of("message", message));
         } catch (RuntimeException e) {

@@ -26,8 +26,14 @@ public class RegisterRequest {
     @Schema(example = "1999-01-01", description = "Birth date in YYYY-MM-DD (optional)")
     private String birthday;
 
+    @Schema(description = "Google reCAPTCHA Token")
+    private String recaptchaToken;
+
     // Getters and Setters
     public String getUsername() { return username; }
+
+    public void setRecaptchaToken(String recaptchaToken) { this.recaptchaToken = recaptchaToken; }
+    public String getRecaptchaToken() { return recaptchaToken; }
     public void setUsername(String username) { this.username = username; }
 
     public String getPassword() { return password; }
